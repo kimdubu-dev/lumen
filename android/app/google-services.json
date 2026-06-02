@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "645297868663",
+    "project_id": "lumen-diary-jhg33",
+    "storage_bucket": "lumen-diary-jhg33.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645297868663:android:21f9f65cbb23017f3f9b72",
+        "android_client_info": {
+          "package_name": "com.example.lumen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBS1uL1viTpc8phbqVOHfoKCDh9vmwW3CY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
