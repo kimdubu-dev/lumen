@@ -34,9 +34,17 @@ class _LoginScreenState extends State<LoginScreen> {
         password: passwordController.text.trim(),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('로그인 실패: $e')),
-      );
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('로그인 실패: $e')));
+    }
+
+    if (!mounted) {
+      return;
     }
 
     setState(() {
@@ -47,9 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void goToSignUpScreen() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const SignUpScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const SignUpScreen()),
     );
   }
 

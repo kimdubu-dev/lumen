@@ -44,21 +44,25 @@ class _FriendSearchScreenState extends State<FriendSearchScreen> {
         .limit(1)
         .get();
 
+    if (!mounted) {
+      return;
+    }
+
     if (snapshot.docs.isNotEmpty) {
       final doc = snapshot.docs.first;
 
       if (doc.id == myUid) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('자기 자신은 친구로 추가할 수 없어요')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('자기 자신은 친구로 추가할 수 없어요')));
       } else {
         foundUser = doc.data();
         foundUserId = doc.id;
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('해당 이메일의 사용자를 찾을 수 없어요')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('해당 이메일의 사용자를 찾을 수 없어요')));
     }
 
     setState(() {
@@ -81,9 +85,9 @@ class _FriendSearchScreenState extends State<FriendSearchScreen> {
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('친구 요청을 보냈어요')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('친구 요청을 보냈어요')));
       Navigator.pop(context);
     }
   }
@@ -91,9 +95,7 @@ class _FriendSearchScreenState extends State<FriendSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('친구 추가'),
-      ),
+      appBar: AppBar(title: const Text('친구 추가')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -121,9 +123,7 @@ class _FriendSearchScreenState extends State<FriendSearchScreen> {
             else if (foundUser != null)
               Card(
                 child: ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.person),
-                  ),
+                  leading: const CircleAvatar(child: Icon(Icons.person)),
                   title: Text(foundUser!['nickname'] ?? '이름 없음'),
                   subtitle: Text(foundUser!['email'] ?? ''),
                   trailing: FilledButton(
