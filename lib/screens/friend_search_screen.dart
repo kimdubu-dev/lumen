@@ -94,11 +94,13 @@ class _FriendSearchScreenState extends State<FriendSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(title: const Text('친구 추가')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 26),
           children: [
             TextField(
               controller: emailController,
@@ -106,16 +108,14 @@ class _FriendSearchScreenState extends State<FriendSearchScreen> {
               decoration: const InputDecoration(
                 labelText: '친구 이메일',
                 hintText: 'example@gmail.com',
-                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.mail_outline_rounded),
               ),
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: searchUser,
-                child: const Text('검색'),
-              ),
+            FilledButton.icon(
+              onPressed: searchUser,
+              icon: const Icon(Icons.search_rounded),
+              label: const Text('검색'),
             ),
             const SizedBox(height: 24),
             if (isLoading)
@@ -123,12 +123,16 @@ class _FriendSearchScreenState extends State<FriendSearchScreen> {
             else if (foundUser != null)
               Card(
                 child: ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.person)),
+                  leading: CircleAvatar(
+                    backgroundColor: scheme.primaryContainer,
+                    child: Icon(Icons.person_rounded, color: scheme.primary),
+                  ),
                   title: Text(foundUser!['nickname'] ?? '이름 없음'),
                   subtitle: Text(foundUser!['email'] ?? ''),
-                  trailing: FilledButton(
+                  trailing: FilledButton.icon(
                     onPressed: sendFriendRequest,
-                    child: const Text('요청'),
+                    icon: const Icon(Icons.send_rounded, size: 18),
+                    label: const Text('요청'),
                   ),
                 ),
               ),

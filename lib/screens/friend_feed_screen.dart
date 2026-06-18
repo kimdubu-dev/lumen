@@ -118,18 +118,14 @@ class _FriendFeedScreenState extends State<FriendFeedScreen> {
     if (likeDoc.exists) {
       await likeRef.delete();
 
-      await diaryRef.update({
-        'likeCount': FieldValue.increment(-1),
-      });
+      await diaryRef.update({'likeCount': FieldValue.increment(-1)});
     } else {
       await likeRef.set({
         'uid': myUid,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      await diaryRef.update({
-        'likeCount': FieldValue.increment(1),
-      });
+      await diaryRef.update({'likeCount': FieldValue.increment(1)});
     }
 
     await loadFriendFeed();
@@ -142,133 +138,230 @@ class _FriendFeedScreenState extends State<FriendFeedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('친구 피드'),
-      ),
+      appBar: AppBar(title: const Text('친구 피드')),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : feedDiaries.isEmpty
-              ? const Center(
-                  child: Text(
-                    '친구가 공개한 일기가 아직 없어요',
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: loadFriendFeed,
-                  child: ListView.builder(
-                    itemCount: feedDiaries.length,
-                    itemBuilder: (context, index) {
-                      final diary = feedDiaries[index];
-                      final photoUrl = diary['friendPhotoUrl'];
-                      final isLiked = diary['isLiked'] == true;
+          ? Padding(
+              padding: const EdgeInsets.all(18),
+              child: _FeedEmptyCard(
+                title: '친구가 공개한 일기가 아직 없어요',
+                message: '친구의 공개 일기가 생기면 이곳에 표시돼요.',
+                icon: Icons.groups_2_outlined,
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: loadFriendFeed,
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(18, 8, 18, 26),
+                itemCount: feedDiaries.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final diary = feedDiaries[index];
 
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundImage: photoUrl != null
-                                        ? NetworkImage(photoUrl)
-                                        : null,
-                                    child: photoUrl == null
-                                        ? const Icon(Icons.person)
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        diary['friendNickname'],
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      Text(
-                                        formatDate(diary['createdAt']),
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                '${diary['mood']} ${diary['title'].isEmpty ? '제목 없음' : diary['title']}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                diary['content'].isEmpty
-                                    ? '내용 없음'
-                                    : diary['content'],
-                                maxLines: 4,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(height: 1.5),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      isLiked
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: isLiked ? Colors.red : null,
-                                    ),
-                                    onPressed: () {
-                                      toggleLike(diary);
-                                    },
-                                  ),
-                                  Text(
-                                    '${diary['likeCount']}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.chat_bubble_outline,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => CommentsScreen(
-                                            ownerUid: diary['friendUid'],
-                                            diaryId: diary['diaryId'],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
+                  return _FriendDiaryCard(
+                    diary: diary,
+                    dateText: formatDate(diary['createdAt']),
+                    onLike: () => toggleLike(diary),
+                    onComment: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CommentsScreen(
+                            ownerUid: diary['friendUid'],
+                            diaryId: diary['diaryId'],
                           ),
                         ),
                       );
                     },
+                  );
+                },
+              ),
+            ),
+    );
+  }
+}
+
+class _FriendDiaryCard extends StatelessWidget {
+  final Map<String, dynamic> diary;
+  final String dateText;
+  final VoidCallback onLike;
+  final VoidCallback onComment;
+
+  const _FriendDiaryCard({
+    required this.diary,
+    required this.dateText,
+    required this.onLike,
+    required this.onComment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final photoUrl = diary['friendPhotoUrl'];
+    final isLiked = diary['isLiked'] == true;
+    final title = diary['title'].isEmpty ? '제목 없음' : diary['title'];
+    final content = diary['content'].isEmpty ? '내용 없음' : diary['content'];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: scheme.primaryContainer,
+                  backgroundImage: photoUrl != null
+                      ? NetworkImage(photoUrl)
+                      : null,
+                  child: photoUrl == null
+                      ? Icon(Icons.person_rounded, color: scheme.primary)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        diary['friendNickname'],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        dateText,
+                        style: textTheme.labelMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      diary['mood'],
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              content,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodyMedium?.copyWith(height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                IconButton(
+                  tooltip: isLiked ? '좋아요 취소' : '좋아요',
+                  icon: Icon(
+                    isLiked
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: isLiked ? scheme.secondary : scheme.onSurfaceVariant,
+                  ),
+                  onPressed: onLike,
+                ),
+                Text(
+                  '${diary['likeCount']}',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: '댓글',
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  color: scheme.onSurfaceVariant,
+                  onPressed: onComment,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedEmptyCard extends StatelessWidget {
+  final String title;
+  final String message;
+  final IconData icon;
+
+  const _FeedEmptyCard({
+    required this.title,
+    required this.message,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: scheme.primary, size: 28),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -14,10 +14,7 @@ import 'friends_screen.dart';
 class ProfileScreen extends StatefulWidget {
   final int diaryCount;
 
-  const ProfileScreen({
-    super.key,
-    required this.diaryCount,
-  });
+  const ProfileScreen({super.key, required this.diaryCount});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -62,15 +59,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }, SetOptions(merge: true));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('프로필 사진이 변경됐어요')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('프로필 사진이 변경됐어요')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('업로드 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('업로드 실패: $e')));
       }
     }
 
@@ -91,9 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: const Text('닉네임 변경'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
-              labelText: '새 닉네임',
-            ),
+            decoration: const InputDecoration(labelText: '새 닉네임'),
           ),
           actions: [
             TextButton(
@@ -122,201 +117,263 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }, SetOptions(merge: true));
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('닉네임이 변경됐어요')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('닉네임이 변경됐어요')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (user == null) {
-      return const Scaffold(
-        body: Center(
-          child: Text('로그인이 필요해요'),
-        ),
-      );
+      return const Scaffold(body: Center(child: Text('로그인이 필요해요')));
     }
 
-    final userDoc =
-        FirebaseFirestore.instance.collection('users').doc(user!.uid);
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('프로필'),
-      ),
+      appBar: AppBar(title: const Text('프로필')),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: userDoc.snapshots(),
         builder: (context, snapshot) {
           final data = snapshot.data?.data();
-          final photoUrl = data?['photoUrl'];
-          final nickname = data?['nickname'] ?? user!.email?.split('@')[0];
+          final photoUrl = data?['photoUrl'] as String?;
+          final nickname =
+              (data?['nickname'] ?? user!.email?.split('@')[0] ?? '사용자')
+                  .toString();
+          final scheme = Theme.of(context).colorScheme;
+          final textTheme = Theme.of(context).textTheme;
 
-          return Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          return SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 26),
               children: [
-                Center(
-                  child: GestureDetector(
-                    onTap: pickAndUploadImage,
-                    child: Stack(
-                      alignment: Alignment.bottomRight,
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                    child: Column(
                       children: [
-                        CircleAvatar(
-                          radius: 52,
-                          backgroundImage:
-                              photoUrl != null ? NetworkImage(photoUrl) : null,
-                          child: photoUrl == null
-                              ? const Icon(Icons.person, size: 56)
-                              : null,
+                        GestureDetector(
+                          onTap: pickAndUploadImage,
+                          child: Stack(
+                            alignment: Alignment.bottomRight,
+                            children: [
+                              CircleAvatar(
+                                radius: 54,
+                                backgroundColor: scheme.primaryContainer,
+                                backgroundImage: photoUrl != null
+                                    ? NetworkImage(photoUrl)
+                                    : null,
+                                child: photoUrl == null
+                                    ? Icon(
+                                        Icons.person_rounded,
+                                        size: 56,
+                                        color: scheme.primary,
+                                      )
+                                    : null,
+                              ),
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: scheme.primary,
+                                child: isUploading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.camera_alt_rounded,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                              ),
+                            ],
+                          ),
                         ),
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          child: isUploading
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.camera_alt,
-                                  size: 18,
-                                  color: Colors.white,
+                        const SizedBox(height: 18),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                nickname,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w900,
                                 ),
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: '닉네임 변경',
+                              onPressed: changeNickname,
+                              icon: const Icon(Icons.edit_outlined),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          user!.email ?? '알 수 없음',
+                          textAlign: TextAlign.center,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        nickname ?? '사용자',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                const SizedBox(height: 14),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.auto_stories_outlined,
+                            color: scheme.primary,
+                          ),
                         ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '작성한 일기',
+                                style: textTheme.labelMedium?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${widget.diaryCount}개',
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Card(
+                  child: Column(
+                    children: [
+                      _ProfileActionTile(
+                        icon: Icons.person_add_alt_1_rounded,
+                        title: '친구 추가',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FriendSearchScreen(),
+                            ),
+                          );
+                        },
                       ),
-                      IconButton(
-                        onPressed: changeNickname,
-                        icon: const Icon(Icons.edit_outlined),
+                      const Divider(height: 1),
+                      _ProfileActionTile(
+                        icon: Icons.mark_email_unread_outlined,
+                        title: '친구 요청',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const FriendRequestsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      _ProfileActionTile(
+                        icon: Icons.people_outline_rounded,
+                        title: '친구 목록',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FriendsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1),
+                      _ProfileActionTile(
+                        icon: Icons.dynamic_feed_outlined,
+                        title: '친구 피드',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FriendFeedScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-                const Text(
-                  '이메일',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  user!.email ?? '알 수 없음',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  '작성한 일기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${widget.diaryCount}개',
-                  style: const TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FriendSearchScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.person_add_alt_1),
-                    label: const Text('친구 추가'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FriendRequestsScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.mark_email_unread_outlined),
-                    label: const Text('친구 요청'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FriendsScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.people_outline),
-                    label: const Text('친구 목록'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const FriendFeedScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.dynamic_feed_outlined),
-                    label: const Text('친구 피드'),
-                  ),
-                ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      await FirebaseAuth.instance.signOut();
+                const SizedBox(height: 18),
+                FilledButton.icon(
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
 
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
-                    },
-                    icon: const Icon(Icons.logout),
-                    label: const Text('로그아웃'),
-                  ),
+                    if (context.mounted && Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  icon: const Icon(Icons.logout_rounded),
+                  label: const Text('로그아웃'),
                 ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+}
+
+class _ProfileActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const _ProfileActionTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return ListTile(
+      leading: Icon(icon, color: scheme.primary),
+      title: Text(title),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: scheme.onSurfaceVariant,
+      ),
+      onTap: onTap,
     );
   }
 }

@@ -146,11 +146,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedDiary = _getDiaryByDay(_selectedDay);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lumen')),
+      appBar: AppBar(
+        title: const Text('Lumen'),
+        actions: [
+          IconButton(
+            tooltip: '새로고침',
+            onPressed: _loadDiaries,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _loadDiaries,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+          padding: const EdgeInsets.fromLTRB(18, 6, 18, 26),
           children: [
             _TodaySummaryCard(
               diaryCount: _diaries.length,
@@ -209,60 +218,89 @@ class _TodaySummaryCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: scheme.primaryContainer,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Center(
-                child: Text(
-                  selectedDiary?.mood ?? '✍️',
-                  style: const TextStyle(fontSize: 28),
-                ),
+            Text(
+              '선택한 날',
+              style: textTheme.labelMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${selectedDay.month}월 ${selectedDay.day}일',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    selectedTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            const SizedBox(height: 12),
+            Row(
               children: [
-                Text(
-                  '$diaryCount',
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: scheme.primary.withValues(alpha: 0.12),
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      selectedDiary?.mood ?? '✍️',
+                      style: const TextStyle(fontSize: 28),
+                    ),
                   ),
                 ),
-                Text(
-                  '기록',
-                  style: textTheme.labelMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${selectedDay.month}월 ${selectedDay.day}일',
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        selectedTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '$diaryCount',
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          height: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '기록',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -301,10 +339,11 @@ class _CalendarCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
         child: TableCalendar(
           firstDay: DateTime.utc(2020, 1, 1),
           lastDay: DateTime.utc(2035, 12, 31),
@@ -313,15 +352,57 @@ class _CalendarCard extends StatelessWidget {
           onDaySelected: onDaySelected,
           rowHeight: 48,
           availableGestures: AvailableGestures.horizontalSwipe,
-          headerStyle: const HeaderStyle(
+          headerStyle: HeaderStyle(
             formatButtonVisible: false,
             titleCentered: true,
+            leftChevronIcon: Icon(
+              Icons.chevron_left_rounded,
+              color: scheme.onSurface,
+            ),
+            rightChevronIcon: Icon(
+              Icons.chevron_right_rounded,
+              color: scheme.onSurface,
+            ),
+            titleTextStyle:
+                textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900) ??
+                const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          daysOfWeekStyle: DaysOfWeekStyle(
+            weekdayStyle:
+                textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w800,
+                ) ??
+                TextStyle(color: scheme.onSurfaceVariant),
+            weekendStyle:
+                textTheme.labelMedium?.copyWith(
+                  color: scheme.secondary,
+                  fontWeight: FontWeight.w800,
+                ) ??
+                TextStyle(color: scheme.secondary),
           ),
           calendarStyle: CalendarStyle(
             outsideDaysVisible: false,
+            cellMargin: const EdgeInsets.all(4),
+            defaultTextStyle:
+                textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700) ??
+                const TextStyle(fontWeight: FontWeight.w700),
+            weekendTextStyle:
+                textTheme.bodyMedium?.copyWith(
+                  color: scheme.secondary,
+                  fontWeight: FontWeight.w700,
+                ) ??
+                TextStyle(color: scheme.secondary),
             todayDecoration: BoxDecoration(
-              color: scheme.secondaryContainer,
+              color: scheme.secondary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: scheme.secondary.withValues(alpha: 0.3),
+              ),
+            ),
+            todayTextStyle: TextStyle(
+              color: scheme.secondary,
+              fontWeight: FontWeight.w900,
             ),
             selectedDecoration: BoxDecoration(
               color: scheme.primary,
@@ -329,7 +410,7 @@ class _CalendarCard extends StatelessWidget {
             ),
             selectedTextStyle: TextStyle(
               color: scheme.onPrimary,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
             ),
           ),
           calendarBuilders: CalendarBuilders(
@@ -342,7 +423,7 @@ class _CalendarCard extends StatelessWidget {
 
               return Positioned(
                 bottom: 2,
-                child: Text(diary.mood, style: const TextStyle(fontSize: 14)),
+                child: Text(diary.mood, style: const TextStyle(fontSize: 13)),
               );
             },
           ),
@@ -371,58 +452,108 @@ class _SelectedDiaryCard extends StatelessWidget {
     return Card(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(diary.mood, style: const TextStyle(fontSize: 30)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      diary.displayTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        diary.mood,
+                        style: const TextStyle(fontSize: 26),
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          diary.displayTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                diary.isPublic
+                                    ? Icons.public_rounded
+                                    : Icons.lock_outline_rounded,
+                                size: 14,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                diary.visibilityLabel,
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   IconButton(
                     tooltip: '삭제',
                     icon: const Icon(Icons.delete_outline_rounded),
+                    color: scheme.onSurfaceVariant,
                     onPressed: onDelete,
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(
-                    diary.isPublic
-                        ? Icons.public_rounded
-                        : Icons.lock_outline_rounded,
-                    size: 16,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    diary.visibilityLabel,
-                    style: textTheme.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text(
                 diary.displayContent,
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
                 style: textTheme.bodyMedium?.copyWith(height: 1.5),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Text(
+                    '자세히 보기',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: scheme.primary,
+                  ),
+                ],
               ),
             ],
           ),
@@ -441,26 +572,41 @@ class _EmptyDayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(22),
         child: Column(
           children: [
-            Icon(Icons.edit_note_rounded, color: scheme.primary, size: 36),
-            const SizedBox(height: 10),
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.edit_note_rounded,
+                color: scheme.primary,
+                size: 30,
+              ),
+            ),
+            const SizedBox(height: 14),
             Text(
               '${selectedDay.month}월 ${selectedDay.day}일의 일기가 없어요.',
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               '짧게라도 남겨두면 캘린더에 감정이 표시돼요.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: scheme.onSurfaceVariant),
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 18),
             SizedBox(

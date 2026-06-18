@@ -20,8 +20,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
   final controller = TextEditingController();
 
   String get myUid => FirebaseAuth.instance.currentUser!.uid;
-  String get myEmail =>
-      FirebaseAuth.instance.currentUser?.email ?? '알 수 없음';
+  String get myEmail => FirebaseAuth.instance.currentUser?.email ?? '알 수 없음';
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   Future<void> addComment() async {
     final text = controller.text.trim();
@@ -35,11 +40,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
         .doc(widget.diaryId)
         .collection('comments')
         .add({
-      'uid': myUid,
-      'email': myEmail,
-      'content': text,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+          'uid': myUid,
+          'email': myEmail,
+          'content': text,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
 
     controller.clear();
   }
@@ -55,9 +60,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
         .orderBy('createdAt', descending: true);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('댓글'),
-      ),
+      appBar: AppBar(title: const Text('댓글')),
       body: Column(
         children: [
           Expanded(
@@ -65,36 +68,38 @@ class _CommentsScreenState extends State<CommentsScreen> {
               stream: commentsQuery.snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 final comments = snapshot.data!.docs;
 
                 if (comments.isEmpty) {
-                  return const Center(
-                    child: Text('첫 댓글을 남겨보세요 ✍️'),
+                  return const Padding(
+                    padding: EdgeInsets.all(18),
+                    child: _CommentsEmptyCard(),
                   );
                 }
 
-                return ListView.builder(
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
                   itemCount: comments.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final data = comments[index].data();
+                    final scheme = Theme.of(context).colorScheme;
 
-                    return ListTile(
-                      leading: const CircleAvatar(
-                        child: Icon(Icons.person),
-                      ),
-                      title: Text(
-                        data['email'] ?? '사용자',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                    return Card(
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: scheme.primaryContainer,
+                          child: Icon(
+                            Icons.person_rounded,
+                            color: scheme.primary,
+                          ),
                         ),
-                      ),
-                      subtitle: Text(
-                        data['content'] ?? '',
+                        title: Text(data['email'] ?? '사용자'),
+                        subtitle: Text(data['content'] ?? ''),
                       ),
                     );
                   },
@@ -103,27 +108,79 @@ class _CommentsScreenState extends State<CommentsScreen> {
             ),
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      decoration: const InputDecoration(
-                        hintText: '댓글을 입력하세요',
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(
+                  top: BorderSide(color: Theme.of(context).colorScheme.outline),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        decoration: const InputDecoration(
+                          hintText: '댓글을 입력하세요',
+                          prefixIcon: Icon(Icons.chat_bubble_outline_rounded),
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: addComment,
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
+                    IconButton(
+                      tooltip: '댓글 보내기',
+                      onPressed: addComment,
+                      icon: const Icon(Icons.send_rounded),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CommentsEmptyCard extends StatelessWidget {
+  const _CommentsEmptyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: scheme.primary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              '첫 댓글을 남겨보세요',
+              textAlign: TextAlign.center,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
